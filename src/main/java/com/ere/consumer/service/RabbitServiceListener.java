@@ -1,6 +1,7 @@
 package com.ere.consumer.service;
 
 import com.ere.consumer.domain.domain.InfoDocument;
+import com.ere.consumer.repository.DocsMongoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RabbitServiceListener {
 
+    private final DocsMongoRepository docsMongoRepository;
+
     @RabbitListener(queues = "document-queue-find")
     public String getDocProcess(String message) throws InterruptedException {
         TimeUnit.SECONDS.sleep(3);
@@ -28,10 +31,15 @@ public class RabbitServiceListener {
     }
 
     @RabbitListener(queues = "document-queue-saved")
-    public void savedDocsQueueListener(final ConcurrentLinkedQueue<InfoDocument> infoDocument) throws InterruptedException {
-        TimeUnit.SECONDS.sleep(2);
-        log.info("Received from queue: " + infoDocument);
-        // todo: some action with docs
+    public void firstSavedDocsQueueListener(final ConcurrentLinkedQueue<InfoDocument> infoDocument) {
+        log.info("1-list-> Received from queue: " + infoDocument);
+        docsMongoRepository.saveAll(infoDocument);
+    }
+
+    @RabbitListener(queues = "document-queue-saved")
+    public void secondSavedDocsQueueListener(final ConcurrentLinkedQueue<InfoDocument> infoDocument) {
+        log.info("2-list-> Received from queue: " + infoDocument);
+        docsMongoRepository.saveAll(infoDocument);
     }
 
 }
